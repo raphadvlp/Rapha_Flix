@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-
 import './filmes-info.css';
+import { toast } from 'react-toastify';
 
 function Filme() {
-    const { id } = useParams();
+    const { id } = useParams(); //Pegando o ID
+    const navigate = useNavigate();
+
     const [filme, setFilme] = useState({});
     const [loading, setLoading] = useState(true);
+
 
 
     useEffect(() => {
@@ -26,6 +28,8 @@ function Filme() {
             })
             .catch(() =>{
                 console.log("Filme não encontrado");
+                navigate("/", { replace: true }); //Redireciona para o home caso o filme não seja encontrado
+                return;
             })
         }
 
@@ -36,7 +40,24 @@ function Filme() {
             console.log("Componente foi desmontado");
         }
 
-    }, [])
+    }, [navigate, id])
+
+    function salvarFilme() {
+        const minhaLista = localStorage.getItem("@primeflix");
+
+        let filmesSalvos = JSON.parse(minhaLista) || [];
+
+        const hasFilme = filmesSalvos.some((filmeSalvo) => filmeSalvo.id === filme.id); //Verifica se já tem o filme salvo
+
+        if(hasFilme) {
+            toast.warn("Esse filme já está na sua lista!")
+            return;
+        }
+
+        filmesSalvos.push(filme);
+        localStorage.setItem("@primeflix", JSON.stringify(filmesSalvos));
+        toast.success("Filme salvo com sucesso!")
+    }
 
     if(loading){
         return(
@@ -56,9 +77,9 @@ function Filme() {
             <strong>Avaliação: {filme.vote_average} / 10</strong>
 
             <div className='area-buttons'>
-                <button>Salvar</button>
+                <button onClick={salvarFilme}>Salvar</button>
                 <button>
-                    <a href="#">
+                    <a href={`https://youtube.com/results?search_query=${filme.title} Trailer`} target='blank' rel='external'>
                         Trailer
                     </a>
                 </button>
